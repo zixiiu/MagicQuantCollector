@@ -4,12 +4,10 @@ import datetime
 import NewData
 import variables
 
-logging.basicConfig(filename=variables.log_file_name,
-                    encoding='utf-8',
-                    level=logging.DEBUG,
+logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s:%(message)s')
 
-gostright = False
+gostright = True
 
 logging.info('service started.')
 while True:
@@ -21,5 +19,6 @@ while True:
         time.sleep(3600)
     except Exception as e:
         logging.exception("message")
+        time.sleep(3600)
     except KeyboardInterrupt:
         raise KeyboardInterrupt
