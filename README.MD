@@ -11,3 +11,9 @@ need to add `--net="host"` as an option in order to access mysql from other cont
 
 #### update on synology
 Run watchtower.
+
+#### Mysql on synology
+https://blog.csdn.net/lzyy1992/article/details/86256019  
+
+#### SnowBall API Wrapper
+https://github.com/uname-yang/pysnowball
