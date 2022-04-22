@@ -8,6 +8,8 @@ COPY requirements.txt requirements.txt
 
 RUN pip3 install -r requirements.txt
 
+RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo 'Asia/Shanghai' >/etc/timezone
+
 COPY . .
 
 CMD [ "python3", "MainLoop.py"]
