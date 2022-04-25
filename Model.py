@@ -66,6 +66,6 @@ class Comment(Base):
 
 if __name__ == '__main__':
     ## CREATE SCHEMA
-    from sqlalchemy import create_engine
-    engine = create_engine("mysql+pymysql://root:wfi2Uikis@192.168.123.206:3306/MainQuantDB?charset=utf8mb4")
+    from SQLEngine import engine
+    engine = engine().engine
     Base.metadata.create_all(engine)
