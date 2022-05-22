@@ -15,7 +15,7 @@ while True:
     try:
         if datetime.datetime.now().strftime('%H') == '00' or gostright:
             NewData.update_data()
-            Notification.send_notification("MQCollector SUCCESS.")
+            # Notification.send_notification("MQCollector SUCCESS.")
         else:
             logging.debug('not the time yet.')
         time.sleep(3600)

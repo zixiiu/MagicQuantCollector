@@ -1,6 +1,8 @@
 import datetime
 
 from sqlalchemy import select
+
+import Notification
 from SQLEngine import engine
 from sqlalchemy.orm import Session
 from Model import Stock, History, Comment
@@ -18,6 +20,9 @@ def update_data():
     e = engine().engine
     ## get interested stocks
 
+    # count cmts:
+    n_cmt = 0
+    n_stock = 0
     with Session(e) as s:
         stmt = select(Stock)
         for sym in s.scalars(stmt):
@@ -54,10 +59,15 @@ def update_data():
 
                 sym.histories.append(newHis)
                 sym.updated = today
+                # count!
+                n_cmt += len(newCmts)
+                n_stock += 1
+
             else:
                 logging.info('%s: today already recorded, skip.' % sym.code)
         logging.info('%s: saving to db.' % sym.code)
         s.commit()
+    Notification.send_notification('MQCollector SUCCESS: %i cmts acquired for %i stocks' %(n_cmt, n_stock))
 
 if __name__ == '__main__':
     update_data()
