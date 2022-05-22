@@ -67,7 +67,8 @@ def update_data():
                 logging.info('%s: today already recorded, skip.' % sym.code)
         logging.info('%s: saving to db.' % sym.code)
         s.commit()
-    Notification.send_notification('MQCollector SUCCESS: %i cmts acquired for %i stocks' %(n_cmt, n_stock))
+    if n_cmt > 0:
+        Notification.send_notification('MQCollector SUCCESS: %i cmts acquired for %i stocks' %(n_cmt, n_stock))
 
 if __name__ == '__main__':
     update_data()
