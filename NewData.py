@@ -2,17 +2,19 @@ import datetime
 
 from sqlalchemy import select
 
+import GetCommentEastMoney
 import Notification
 from SQLEngine import engine
 from sqlalchemy.orm import Session
 from Model import Stock, History, Comment
 import pysnowball as ball
-import GetComment
+import GetCommentXueqiu
 
 from datetime import date, datetime, timedelta
 import variables
 
 import logging
+
 
 def update_data():
     ball.set_token(variables.token)
@@ -21,7 +23,8 @@ def update_data():
     ## get interested stocks
 
     # count cmts:
-    n_cmt = 0
+    n_cmt_xq = 0
+    n_cmt_em = 0
     n_stock = 0
     with Session(e) as s:
         stmt = select(Stock)
@@ -52,23 +55,30 @@ def update_data():
                     load_until = load_until.timestamp() * 1000
                 else:
                     load_until = sym.latest_comment.timestamp() * 1000
-                newCmts, latest_time = GetComment.getCommentUntil(load_until, sym.code)
-                logging.info('%s: %d new comments acquired.' % (sym.code, len(newCmts)))
-                newHis.comments += newCmts
-                sym.latest_comment = datetime.fromtimestamp(latest_time / 1000)
+                new_cmts_xq, latest_time_xq = GetCommentXueqiu.getCommentUntil(load_until, sym.code)
+                logging.info('%s: %d new comments acquired from xueqiu.' % (sym.code, len(new_cmts_xq)))
+                new_cmts_em, latest_time_em = GetCommentEastMoney.getCommentUntil(load_until, sym.code_em)
+                logging.info('%s: %d new comments acquired from eastmoney.' % (sym.code, len(new_cmts_em)))
+                newHis.comments += new_cmts_xq
+                newHis.comments += new_cmts_em
+
+                sym.latest_comment = datetime.fromtimestamp(max(latest_time_xq, latest_time_em) / 1000)
 
                 sym.histories.append(newHis)
                 sym.updated = today
                 # count!
-                n_cmt += len(newCmts)
+                n_cmt_xq += len(new_cmts_xq)
+                n_cmt_em += len(new_cmts_em)
                 n_stock += 1
 
             else:
                 logging.info('%s: today already recorded, skip.' % sym.code)
         logging.info('%s: saving to db.' % sym.code)
         s.commit()
-    if n_cmt > 0:
-        Notification.send_notification('MQCollector SUCCESS: %i cmts acquired for %i stocks' %(n_cmt, n_stock))
+    if n_cmt_xq > 0 or n_cmt_em > 0:
+        Notification.send_notification('MQCollector SUCCESS: %i xueqiu cmts and %i EastMoney acquired for %i stocks' % (
+        n_cmt_xq, n_cmt_em, n_stock))
+
 
 if __name__ == '__main__':
     update_data()

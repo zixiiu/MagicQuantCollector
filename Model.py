@@ -15,6 +15,7 @@ Base = declarative_base()
 class Stock(Base):
     __tablename__ = "stock"
     code = Column(String(30), primary_key=True)
+    code_em = Column(String(30))
     name = Column(String(30))
     updated = Column(Date)
     started = Column(Date)
@@ -53,9 +54,11 @@ class Comment(Base):
     id = Column(Integer, primary_key=True)
     text = Column(Text(1048576), nullable=False)
     type = Column(String(10))
+    source = Column(String(10))
     time = Column(DateTime)
     added_time = Column(DateTime)
     encoding = Column(String(1024))
+    url = Column(String(512))
 
     history_id = Column(Integer, ForeignKey("history.id"), nullable=False)
     history = relationship("History", back_populates="comments")

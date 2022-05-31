@@ -3,6 +3,9 @@ from Model import Comment
 from datetime import datetime
 from time import sleep
 import logging
+import pysnowball as ball
+import variables
+
 
 
 def getComment(symbol, page):
@@ -29,7 +32,7 @@ def getCommentUntil(timestamp, symbol):
 
     while timestamp < cur_cmt_time:
         rs, mp = getComment(symbol, cur_page)
-        logging.debug('%s: send request for comment, page %d' % (symbol, cur_page))
+        logging.debug('%s: send request for xueqiu comment, page %d' % (symbol, cur_page))
         sleep(0.5)
         max_page = mp
 
@@ -43,12 +46,18 @@ def getCommentUntil(timestamp, symbol):
             newCmt.type = int(cmt['type']) if len(cmt['type']) else None
             newCmt.text = cmt['text']
             newCmt.time = datetime.fromtimestamp(cmt['created_at'] / 1000)
+            newCmt.source = 'xueqiu'
             newCmt.added_time = datetime.now()
-
-            rsl.append(newCmt)
+            if cur_cmt_time > timestamp:
+                rsl.append(newCmt)
             latest_time = cmt['created_at'] if latest_time < cmt['created_at'] else latest_time
 
         if max_page == cur_page:
             break
         cur_page += 1
     return rsl, latest_time
+
+if __name__ == '__main__':
+    ball.set_token(variables.token)
+    rs = getComment('hk01810', 1)
+    print(rs)
