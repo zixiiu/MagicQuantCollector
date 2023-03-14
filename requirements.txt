@@ -1,4 +1,6 @@
-SQLAlchemy~=1.4.35
-pysnowball~=0.1.0
-PyMySQL~=1.0.2
+SQLAlchemy
+pysnowball
+PyMySQL
 cryptography
+requests
+beautifulsoup4
