@@ -76,7 +76,7 @@ def update_data():
         logging.info('%s: saving to db.' % sym.code)
         s.commit()
     if n_cmt_xq > 0 or n_cmt_em > 0:
-        Notification.send_notification('MQCollector SUCCESS: %i xueqiu cmts and %i EastMoney acquired for %i stocks' % (
+        Notification.send_notification('MQCollector SUCCESS','%i xueqiu cmts and %i EastMoney acquired for %i stocks' % (
             n_cmt_xq, n_cmt_em, n_stock))
 
 

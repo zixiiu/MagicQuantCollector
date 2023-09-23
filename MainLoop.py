@@ -21,7 +21,7 @@ while True:
         time.sleep(3600)
     except Exception as e:
         logging.exception("message")
-        Notification.send_notification("MQCollector ERROR, check log.")
+        Notification.send_notification("MQCollector ERROR", "check log.")
         time.sleep(3600)
     except KeyboardInterrupt:
         raise KeyboardInterrupt
