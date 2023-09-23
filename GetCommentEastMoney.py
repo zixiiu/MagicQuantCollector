@@ -10,24 +10,27 @@ import logging
 def getComment(symbol, page):
     # returns a tuple of (msg, time)
     url = 'http://guba.eastmoney.com/list,%s,f_%i.html' % (symbol, page)
-    r = requests.get(url)
+    user_agent = {'User-agent': 'Mozilla/5.0'}
+    r = requests.get(url, headers=user_agent)
     year = (datetime.today() - timedelta(days=1)).strftime('%Y')
     soup = BeautifulSoup(r.text, 'html.parser')
     # print(soup.title)
     res = []
-    divs = soup.find_all("div", {"class": "normal_post"})
+    divs = soup.find_all("tr", {"class": "listitem"})
     if len(divs) == 0:
         raise ValueError('EastMoney Crawler Error, maybe page has changed.')
     for div in divs:
-        div.find_next()
-        title = div.find_next("span", {"class": "a3"})
-        time = div.find_next("span", {"class": "a5"})
+        # div.find_next()
+        title = div.find("div", {"class": "title"})
+        intitle = title.find_next("a")
+        time = div.find("div", {"class": ["update", "pub_time"]})
         post_url = title.find('a').attrs['href']
-        if title.find('em') and 'icon_list_hot' in title.find('em').attrs['class']:
+        author = div.find("div", {'class': 'author'})
+        if '资讯' in author.text:
             pass
         else:
             res.append(
-                (title.text,
+                (intitle.text,
                  datetime.strptime(year + '-' + time.text, '%Y-%m-%d %H:%M'),
                  post_url
                  )
