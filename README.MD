@@ -2,6 +2,8 @@
 #### build image
 ```commandline
 docker build --tag faznky/mqcollector .
+# or on ARM MAC
+docker buildx build --platform=linux/amd64 --tag faznky/mqcollector .
 ```
 and then use docker desktop push.
 

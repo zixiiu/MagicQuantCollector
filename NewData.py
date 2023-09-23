@@ -17,7 +17,7 @@ import logging
 
 
 def update_data():
-    ball.set_token(variables.token)
+    ball.set_token('xq_a_token=%s' % variables.token)
     ## this is the sql engine
     e = engine().engine
     ## get interested stocks
@@ -77,7 +77,7 @@ def update_data():
         s.commit()
     if n_cmt_xq > 0 or n_cmt_em > 0:
         Notification.send_notification('MQCollector SUCCESS: %i xueqiu cmts and %i EastMoney acquired for %i stocks' % (
-        n_cmt_xq, n_cmt_em, n_stock))
+            n_cmt_xq, n_cmt_em, n_stock))
 
 
 if __name__ == '__main__':
