@@ -87,7 +87,6 @@ def update_data():
 
             else:
                 logging.info('%s: today already recorded, skip.' % sym.code)
-            logging.info('%s: saving to db.' % sym.code)
             s.commit()
     if n_cmt_xq > 0 or n_cmt_em > 0:
         Notification.send_notification(
