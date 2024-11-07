@@ -93,7 +93,8 @@ def update_data():
             'MQCollector SUCCESS \n %i xueqiu cmts and %i EastMoney cmts acquired for %i stocks \n '
             'Time used %s' % (
                 n_cmt_xq, n_cmt_em, n_stock, elapsed_str))
-        Notification.send_notification('SOME EastMoney failed to parse. Pay attention.')
+        if em_failed:
+            Notification.send_notification('SOME EastMoney failed to parse. Pay attention.')
 
 
 def get_all_stock_code():
