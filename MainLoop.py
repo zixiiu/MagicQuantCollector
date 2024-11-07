@@ -1,7 +1,7 @@
 import logging
 import time
 import datetime
-import NewData
+from collector import NewData
 import variables
 import Notification
 
@@ -14,6 +14,7 @@ logging.info('service started.')
 while True:
     try:
         if datetime.datetime.now().strftime('%H') == '00' or gostright:
+            NewData.get_all_stock_code()
             NewData.update_data()
             # Notification.send_notification("MQCollector SUCCESS.")
         else:

@@ -4,3 +4,4 @@ PyMySQL
 cryptography
 requests
 beautifulsoup4
+tushare
