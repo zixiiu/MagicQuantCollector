@@ -29,8 +29,17 @@ def update_data():
     em_failed = False
     with Session(e) as s:
         stmt = select(Stock)
-        for sym in s.scalars(stmt):
-            logging.info('%s: start getting comment' % sym.code)
+        symbols = s.scalars(stmt).all()  # Retrieve all symbols first to get total count
+        total_symbols = len(symbols)
+
+        start_time = datetime.now()  # Record the start time before the loop
+
+        for i, sym in enumerate(symbols, start=1):
+            elapsed_time = datetime.now() - start_time
+            # Format elapsed time as HH:MM:SS
+            elapsed_str = str(elapsed_time).split('.')[0]  # Remove microseconds
+            logging.info('[%d/%d p:%s] %s: start getting comment', i, total_symbols, elapsed_str, sym.code)
+
             today = date.today()
             meta = ball.quote_detail(sym.code)
 
@@ -82,8 +91,9 @@ def update_data():
             s.commit()
     if n_cmt_xq > 0 or n_cmt_em > 0:
         Notification.send_notification(
-            'MQCollector SUCCESS \n %i xueqiu cmts and %i EastMoney cmts acquired for %i stocks' % (
-                n_cmt_xq, n_cmt_em, n_stock))
+            'MQCollector SUCCESS \n %i xueqiu cmts and %i EastMoney cmts acquired for %i stocks \n '
+            'Time used %s' % (
+                n_cmt_xq, n_cmt_em, n_stock, elapsed_str))
         Notification.send_notification('SOME EastMoney failed to parse. Pay attention.')
 
 
@@ -138,9 +148,9 @@ def get_all_stock_code():
 
         # Commit all the changes to the database
         session.commit()
-        logging.info("%i new stocks added successfully." % added_stock)
+        logging.info("%i new stocks added." % added_stock)
         if added_stock:
-            Notification.send_notification("NEW_STOCK: %i new stocks added." % added_stock)
+            Notification.send_notification("NEW STOCK: %i new stocks added." % added_stock)
 
 
     except Exception as e:
