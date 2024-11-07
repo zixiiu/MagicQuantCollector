@@ -9,7 +9,7 @@ import logging
 
 def getComment(symbol, page):
     # returns a tuple of (msg, time)
-    url = 'http://guba.eastmoney.com/list,%s,f_%i.html' % (symbol, page)
+    url = 'http://guba.eastmoney.com/list,%s_%i.html' % (symbol, page)
     user_agent = {'User-agent': 'Mozilla/5.0'}
     r = requests.get(url, headers=user_agent)
     year = (datetime.today() - timedelta(days=1)).strftime('%Y')
@@ -74,5 +74,6 @@ def getCommentUntil(timestamp, symbol):
 
 
 if __name__ == "__main__":
-    rs = getCommentUntil(1653984950000.0,'002594')
+    # rs = getCommentUntil(1653984950000.0,'002594')
+    rs = getComment('002594', 1)
     print(rs)

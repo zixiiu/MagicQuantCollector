@@ -58,6 +58,6 @@ def getCommentUntil(timestamp, symbol):
     return rsl, latest_time
 
 if __name__ == '__main__':
-    ball.set_token(variables.token)
-    rs = getComment('hk01810', 1)
+    ball.set_token('xq_a_token=%s' % variables.token)
+    rs = getComment('SZ300059', 1)
     print(rs)

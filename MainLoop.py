@@ -8,7 +8,7 @@ import Notification
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s:%(message)s')
 
-gostright = True
+gostright = int(variables.test_mode)
 
 logging.info('service started.')
 while True:
@@ -21,7 +21,7 @@ while True:
         time.sleep(3600)
     except Exception as e:
         logging.exception("message")
-        Notification.send_notification("MQCollector ERROR", "check log.")
+        Notification.send_notification("MQCollector ERROR \n %s" % e.__str__())
         time.sleep(3600)
     except KeyboardInterrupt:
         raise KeyboardInterrupt
