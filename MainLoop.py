@@ -4,6 +4,7 @@ import datetime
 from collector import NewData
 import variables
 import Notification
+import pysnowball as ball
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s:%(message)s')
@@ -18,7 +19,10 @@ while True:
             NewData.update_data()
             # Notification.send_notification("MQCollector SUCCESS.")
         else:
-            logging.debug('not the time yet.')
+            logging.debug('not the time yet. checking API availability')
+            ball.set_token('xq_a_token=%s' % variables.token)
+            r = ball.quote_detail('SZ300059')
+
         time.sleep(3600)
     except Exception as e:
         logging.exception("message")

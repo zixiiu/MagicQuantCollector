@@ -47,6 +47,8 @@ def getCommentUntil(timestamp, symbol):
             newCmt.text = cmt['text']
             newCmt.time = datetime.fromtimestamp(cmt['created_at'] / 1000)
             newCmt.source = 'xueqiu'
+            newCmt.stock_code = symbol
+            newCmt.user = cmt['user_id']
             newCmt.added_time = datetime.now()
             if cur_cmt_time > timestamp:
                 rsl.append(newCmt)

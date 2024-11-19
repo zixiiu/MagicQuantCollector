@@ -20,12 +20,15 @@ class Stock(Base):
     updated = Column(Date)
     started = Column(Date)
     latest_comment = Column(DateTime)
+
     histories = relationship(
         "History", back_populates="stock", cascade="all, delete-orphan",
         lazy='select'
     )
-    # def __repr__(self):
-    #     return f"User(id={self.id!r}, name={self.name!r}, fullname={self.fullname!r})"
+    comments = relationship(
+        "Comment", back_populates="stock", cascade="all, delete-orphan",
+        lazy='select'
+    )
 
 
 class History(Base):
@@ -41,10 +44,10 @@ class History(Base):
     amount = Column(Numeric(precision=30, scale=10))
     market_cap = Column(Numeric(precision=30, scale=10))
 
-    stock = relationship("Stock", back_populates='histories')
+    stock = relationship("Stock", back_populates="histories")
 
     comments = relationship(
-        "Comment", back_populates='history', cascade='all, delete-orphan',
+        "Comment", back_populates="history", cascade="all, delete-orphan",
         lazy='noload'
     )
 
@@ -59,12 +62,13 @@ class Comment(Base):
     added_time = Column(DateTime)
     encoding = Column(String(1024))
     url = Column(String(512))
+    user = Column(String(50))  # New user field
 
     history_id = Column(Integer, ForeignKey("history.id"), nullable=False)
-    history = relationship("History", back_populates="comments")
+    stock_code = Column(String(30), ForeignKey("stock.code"), nullable=False)  # Direct link to Stock
 
-    # def __repr__(self):
-    #     return f"Address(id={self.id!r}, email_address={self.email_address!r})"
+    history = relationship("History", back_populates="comments")
+    stock = relationship("Stock", back_populates="comments")
 
 
 if __name__ == '__main__':

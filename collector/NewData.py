@@ -65,24 +65,39 @@ def update_data():
                     load_until = load_until.timestamp() * 1000
                 else:
                     load_until = sym.latest_comment.timestamp() * 1000
-                new_cmts_xq, latest_time_xq = GetCommentXueqiu.getCommentUntil(load_until, sym.code)
-                logging.info('%s: %d new comments acquired from xueqiu.' % (sym.code, len(new_cmts_xq)))
-                newHis.comments += new_cmts_xq
+
+                max_retries = 5
+                attempt = 0
+                while attempt < max_retries:
+                    try:
+                        new_cmts_xq, latest_time_xq = GetCommentXueqiu.getCommentUntil(load_until, sym.code)
+                        logging.info('%s: %d new comments acquired from xueqiu.' % (sym.code, len(new_cmts_xq)))
+                        newHis.comments += new_cmts_xq
+                        break  # Exit loop if successful
+                    except Exception as e:
+                        attempt += 1
+                        logging.warning(
+                            'Attempt %d: Failed to acquire comments for %s. Error: %s' % (attempt, sym.code, str(e)))
+                        if attempt == max_retries:
+                            logging.error(
+                                'Max retries reached for %s. Continuing without raising an exception.' % sym.code)
+
                 try:
-                    new_cmts_em, latest_time_em = GetCommentEastMoney.getCommentUntil(load_until, sym.code_em)
-                    logging.info('%s: %d new comments acquired from eastmoney.' % (sym.code, len(new_cmts_em)))
-                    newHis.comments += new_cmts_em
-                    em_failed = True
+                    pass
+                    # new_cmts_em, latest_time_em = GetCommentEastMoney.getCommentUntil(load_until, sym.code_em)
+                    # logging.info('%s: %d new comments acquired from eastmoney.' % (sym.code, len(new_cmts_em)))
+                    # newHis.comments += new_cmts_em
                 except ValueError:
+                    em_failed = True
                     logging.warning('EastMoney failed on %s. Maybe invalid code' % sym.code)
 
-                sym.latest_comment = datetime.fromtimestamp(max(latest_time_xq, latest_time_em) / 1000)
+                sym.latest_comment = datetime.fromtimestamp(latest_time_xq / 1000)
 
                 sym.histories.append(newHis)
                 sym.updated = today
                 # count!
                 n_cmt_xq += len(new_cmts_xq)
-                n_cmt_em += len(new_cmts_em)
+                # n_cmt_em += len(new_cmts_em)
                 n_stock += 1
 
             else:
@@ -162,5 +177,8 @@ def get_all_stock_code():
 
 
 if __name__ == '__main__':
-    # update_data()
-    get_all_stock_code()
+    update_data()
+    # get_all_stock_code()
+    # ball.set_token('xq_a_token=%s' % variables.token)
+    # r = ball.quote_detail('SZ300059')
+    # print(r)
