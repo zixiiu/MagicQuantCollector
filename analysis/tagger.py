@@ -8,7 +8,7 @@ from datetime import date
 import Notification
 import SQLEngine
 from Model import History, Comment
-from ollama_api import generate_completion  # Assuming you have a module for this
+from analysis.ollama_api import generate_completion  # Assuming you have a module for this
 
 
 # Function to configure console logging
