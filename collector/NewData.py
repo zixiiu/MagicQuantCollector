@@ -81,6 +81,7 @@ def update_data():
                         if attempt == max_retries:
                             logging.error(
                                 'Max retries reached for %s. Continuing without raising an exception.' % sym.code)
+                            latest_time_xq = int(sym.latest_comment.timestamp()) * 1000
 
                 try:
                     pass

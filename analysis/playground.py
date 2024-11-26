@@ -18,7 +18,6 @@ results = (
     session.query(
         Stock.code,
         Stock.name,
-        History.change,
         func.count(Comment.id).label("comment_count")
     )
     .join(History, Stock.code == History.stock_code)
@@ -31,5 +30,5 @@ results = (
 )
 
 # Print results
-for stock_code, stock_name, change, comment_count in results:
-    print(f"{stock_code} ({stock_name}): {comment_count}, today: {change}")
+for stock_code, stock_name, comment_count in results:
+    print(f"{stock_code} ({stock_name}): {comment_count}")

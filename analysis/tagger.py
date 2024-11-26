@@ -24,91 +24,140 @@ def configure_logging():
     return logger
 
 
-def process_stock_comments(engine=SQLEngine.engine().engine):
-    """Process stock comments for tagging using an external API."""
-    logger = logging.getLogger("tagging_process")
-    Session = sessionmaker(bind=engine)
-    session = Session()
+def query_stock_comments(session, filter_type="filtered"):
+    """
+    Query stock comments based on the specified filter type.
+    :param session: SQLAlchemy session
+    :param filter_type: Type of filtering; "filtered" or "all"
+    :return: List of histories with comments
+    """
+    today = date.today()
 
-    tstart_time = time.time()
-
-    processed_comments = 0
-    tagged_comments = 0
-
-    try:
-        # Step 1: Filter histories with more than 100 comments at the query level
-        today = date.today()
+    if filter_type == "filtered":
+        # Filter histories with more than 100 comments
         histories_with_comments = (
             session.query(History)
             .join(Comment)
             .options(joinedload(History.comments))  # Ensure comments are eagerly loaded
             .filter(History.date == today)
             .group_by(History.id)
-            .having(func.count(Comment.id) > 100)
+            .having(func.count(Comment.id) > 10)
             .all()
         )
+    elif filter_type == "all":
+        # Retrieve all histories and their comments
+        histories_with_comments = (
+            session.query(History)
+            .join(Comment)
+            .options(joinedload(History.comments))
+            .all()
+        )
+    else:
+        raise ValueError(f"Unknown filter type: {filter_type}")
 
-        total_comments = sum(len(history.comments) for history in histories_with_comments)
-        logger.info(f"Total comments to process: {total_comments}")
+    logging.info('queried: %i' % (len(histories_with_comments)))
+    return histories_with_comments
 
 
+def process_comments(session, histories_with_comments, logger):
+    """
+    Process comments and tag them using an external API.
+    :param session: SQLAlchemy session
+    :param histories_with_comments: List of histories with comments
+    :param logger: Logger instance
+    """
+    tstart_time = time.time()
+    processed_comments = 0
+    tagged_comments = 0
 
-        # Step 2: Process each history and its comments
-        for history in histories_with_comments:
-            stock = history.stock
-            # Read system prompt from the file
-            with open("analysis/prompt_tagging.txt", "r", encoding='utf-8') as f:
-                system_prompt = f.read().replace("{stock_name}", f"{stock.code} ({stock.name})")
+    total_comments = sum(len(history.comments) for history in histories_with_comments)
+    logger.info(f"Total comments to process: {total_comments}")
 
-            for comment in history.comments:
-                start_time = time.time()  # Start timing
-                prompt = comment.text
+    for history in histories_with_comments:
+        stock = history.stock
 
-                # Generate completion using the API
-                response = generate_completion(system_prompt, prompt)
-                try:
-                    result = json.loads(response)  # Ensure it's valid JSON
-                    if isinstance(result, dict):
-                        comment.encoding = response  # Save JSON-encoded string
-                        session.add(comment)
-                        model_output = result
-                        session.commit()
-                        tagged_comments += 1
-                    else:
-                        model_output = response
-                except Exception as e:
-                    model_output = response
+        # Read system prompt from the file
+        with open("analysis/prompt_tagging.txt", "r", encoding='utf-8') as f:
+            system_prompt = f.read().replace("{stock_name}", f"{stock.code} ({stock.name})")
 
-                # Measure time consumed
-                time_consumed = time.time() - start_time
+        for comment in history.comments:
+            start_time = time.time()  # Start timing
+            prompt = comment.text
 
-                # Log progress with time consumed
-                elapsed_time = time.time() - tstart_time
-                hours, remainder = divmod(int(elapsed_time), 3600)
-                minutes, seconds = divmod(remainder, 60)
-                elapsed_time_formatted = f"{hours:02}h{minutes:02}m{seconds:02}s"
+            # Generate completion using the API
+            response = generate_completion(system_prompt, prompt)
+            try:
+                result = json.loads(response)  # Ensure it's valid JSON
+                if isinstance(result, dict):
+                    comment.encoding = response  # Save JSON-encoded string
+                    session.add(comment)
+                    session.commit()
+                    tagged_comments += 1
+            except Exception as e:
+                logger.error(f"Error processing comment {comment.id}: {e}")
 
-                processed_comments += 1
-                logger.info(
-                    f" {comment.id} | {processed_comments}/{total_comments} | {elapsed_time_formatted} | {time_consumed:.2f}s |"
-                    f" {stock.code} ({stock.name}) || "
-                    f" {model_output} "
-                )
+            # Measure time consumed
+            time_consumed = time.time() - start_time
 
-            # Commit changes for the processed history
-            session.commit()
+            # Log progress with time consumed
+            elapsed_time = time.time() - tstart_time
+            hours, remainder = divmod(int(elapsed_time), 3600)
+            minutes, seconds = divmod(remainder, 60)
+            elapsed_time_formatted = f"{hours:02}h{minutes:02}m{seconds:02}s"
 
-        logger.info("All comments processed successfully.")
+            processed_comments += 1
+            logger.info(
+                f" {comment.id} | {processed_comments}/{total_comments} | {elapsed_time_formatted} | {time_consumed:.2f}s |"
+                f" {stock.code} ({stock.name}) || "
+                f" {response} "
+            )
+
+        # Commit changes for the processed history
+        session.commit()
+
+    logger.info("All comments processed successfully.")
+    return processed_comments, tagged_comments
+
+
+def process_stock_comments(engine=SQLEngine.engine().engine):
+    """Process stock comments with filtering."""
+    logger = logging.getLogger("tagging_process")
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    try:
+        # Query filtered comments
+        histories_with_comments = query_stock_comments(session, filter_type="filtered")
+        processed_comments, tagged_comments = process_comments(session, histories_with_comments, logger)
+        Notification.send_notification(f'Tagging Complete: {tagged_comments}/{processed_comments} Tagged.')
 
     except Exception as e:
         logger.error(f"An unexpected error occurred: {e}")
     finally:
         session.close()
         logger.info("Process completed.")
-        Notification.send_notification(f'tagging Complete: {tagged_comments}/{processed_comments} Tagged.')
 
 
-# Entry point
+def process_all_stock_comments(engine=SQLEngine.engine().engine):
+    logging.info('start tagging all comments.')
+    """Process all stock comments without filtering."""
+    logger = logging.getLogger("tagging_process")
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    try:
+        # Query all comments
+        histories_with_comments = query_stock_comments(session, filter_type="all")
+        processed_comments, tagged_comments = process_comments(session, histories_with_comments, logger)
+        Notification.send_notification(f'Tagging Complete: {tagged_comments}/{processed_comments} Tagged.')
+
+    except Exception as e:
+        logger.error(f"An unexpected error occurred: {e}")
+    finally:
+        session.close()
+        logger.info("Process completed.")
+
+
 if __name__ == "__main__":
     # Set up console logging
     logger = configure_logging()
@@ -117,4 +166,7 @@ if __name__ == "__main__":
     engine = SQLEngine.engine().engine
 
     # Call the processing function
-    process_stock_comments(engine)
+    # process_stock_comments(engine)
+    # Uncomment to process all comments
+    process_all_stock_comments(engine)
+
